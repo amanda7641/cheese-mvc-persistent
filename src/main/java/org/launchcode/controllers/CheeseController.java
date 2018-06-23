@@ -2,6 +2,7 @@ package org.launchcode.controllers;
 
 import org.launchcode.models.Category;
 import org.launchcode.models.Cheese;
+import org.launchcode.models.Menu;
 import org.launchcode.models.data.CategoryDao;
 import org.launchcode.models.data.CheeseDao;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * Created by LaunchCode
@@ -40,6 +42,12 @@ public class CheeseController {
 
     @RequestMapping(value = "add", method = RequestMethod.GET)
     public String displayAddCheeseForm(Model model) {
+
+        if (categoryDao.count()==0){
+            model.addAttribute("title", "Category Needed");
+            model.addAttribute("problem", "You must add a category first!");
+            return "cheese/categoryNeeded";
+        }
         model.addAttribute("title", "Add Cheese");
         model.addAttribute(new Cheese());
         model.addAttribute("categories", categoryDao.findAll());
@@ -64,15 +72,28 @@ public class CheeseController {
 
     @RequestMapping(value = "remove", method = RequestMethod.GET)
     public String displayRemoveCheeseForm(Model model) {
+        if (cheeseDao.count()==0){
+            model.addAttribute("title", "Remove Cheese");
+            model.addAttribute("problem", "You can't remove a cheese if you don't have one created yet!");
+            return "cheese/error";
+        }
         model.addAttribute("cheeses", cheeseDao.findAll());
         model.addAttribute("title", "Remove Cheese");
         return "cheese/remove";
     }
 
     @RequestMapping(value = "remove", method = RequestMethod.POST)
-    public String processRemoveCheeseForm(@RequestParam int[] cheeseIds) {
+    public String processRemoveCheeseForm(@RequestParam int[] cheeseIds, Model model) {
 
         for (int cheeseId : cheeseIds) {
+            Cheese cheese = cheeseDao.findOne(cheeseId);
+            List<Menu> menus = cheese.getMenus();
+            if (menus.size()>0) {
+                model.addAttribute("cheeses", cheeseDao.findAll());
+                model.addAttribute("title", "Remove Cheese");
+                model.addAttribute("problem", "This cheese is on at least 1 menu, you cannot remove it.");
+                return "cheese/error";
+            }
             cheeseDao.delete(cheeseId);
         }
 

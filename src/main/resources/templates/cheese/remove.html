@@ -7,6 +7,10 @@
 
 <nav th:replace="fragments :: navigation"></nav>
 
+<br />
+
+<p th:text="${problem}"></p>
+
 <form method="post">
 
     <div th:each="cheese : ${cheeses}" class="checkbox">
